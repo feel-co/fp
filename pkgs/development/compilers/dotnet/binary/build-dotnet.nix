@@ -232,10 +232,6 @@ mkWrapper type (
         in
         e.success && srcs ? "${e.value}"
       ) lib.platforms.all;
-      sourceProvenance = with lib.sourceTypes; [
-        binaryBytecode
-        binaryNativeCode
-      ];
       knownVulnerabilities =
         lib.optionals
           (lib.elem (lib.head (lib.splitVersion version)) [
