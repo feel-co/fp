@@ -76,13 +76,6 @@ lib.makeOverridable (
       '';
 
       createInstallableNugetSource = installable;
-
-      meta = {
-        sourceProvenance = with lib.sourceTypes; [
-          binaryBytecode
-          binaryNativeCode
-        ];
-      };
     };
   in
   overrides.${pname} or lib.id package
