@@ -80,7 +80,6 @@ let
             libva
             vulkan-loader
 
-            networkmanager
             # not documented, used for network status things in Big Picture
             # FIXME: figure out how to only build libnm?
             libcap # not documented, required by srt-bwrap
