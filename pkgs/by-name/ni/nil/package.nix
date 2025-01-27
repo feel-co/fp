@@ -8,17 +8,17 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "nil";
-  version = "2024-08-06";
+  version = "2024-08-06-unstable-2025-03-04";
 
   src = fetchFromGitHub {
     owner = "oxalica";
     repo = "nil";
-    rev = version;
-    hash = "sha256-DqsN/VkYVr4M0PVRQKXPPOTaind5miYZURIYqM4MxYM=";
+    rev = "577d160da311cc7f5042038456a0713e9863d09e";
+    hash = "sha256-ggXU3RHv6NgWw+vc+HO4/9n0GPufhTIUjVuLci8Za8c=";
   };
 
   useFetchCargoVendor = true;
-  cargoHash = "sha256-7TR/xTc66WpPszJDrpisVvHXl2+FGrUOskZAkGyY04Q=";
+  cargoHash = "sha256-uZsLlFU9GKLvFllF7Kf5Q7HfN26KQojf4rvOb9p7Rjs=";
 
   nativeBuildInputs = [ nix ];
 
