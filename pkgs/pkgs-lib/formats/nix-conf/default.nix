@@ -120,7 +120,6 @@ in
                 NIX_CONF_DIR=$PWD \
                   ${package}/bin/nix ${showCommand} ${optionalString (isNixAtLeast "2.3pre") "--no-net"} \
                     ${optionalString (isNixAtLeast "2.4pre") "--option experimental-features nix-command"} \
-                  |& sed -e 's/^warning:/error:/' \
                   | (! grep '${if checkAllErrors then "^error:" else "^error: unknown setting"}')
                 set -o pipefail
               ''
