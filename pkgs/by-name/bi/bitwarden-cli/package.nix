@@ -50,6 +50,11 @@ buildNpmPackage rec {
 
   npmFlags = [ "--legacy-peer-deps" ];
 
+  npmRebuildFlags = [
+    # FIXME one of the esbuild versions fails to download @esbuild/linux-x64
+    "--ignore-scripts"
+  ];
+
   postConfigure = ''
     # we want to build everything from source
     shopt -s globstar
@@ -62,6 +67,28 @@ buildNpmPackage rec {
     shopt -s globstar
     rm -r node_modules/**/{*.target.mk,binding.Makefile,config.gypi,Makefile,Release/.deps}
     shopt -u globstar
+  '';
+
+  preFixup = ''
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/vault-export-core
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/web-vault
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/vault
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/node
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/platform
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/key-management
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/importer
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/desktop-napi
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/desktop
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/common
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/components
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/browser
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/billing
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/auth
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/admin-console-common
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/admin-console
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/angular
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/@bitwarden/cli
+    rm $out/lib/node_modules/@bitwarden/clients/node_modules/.bin/bw
   '';
 
   passthru = {
