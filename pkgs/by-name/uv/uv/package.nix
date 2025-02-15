@@ -20,17 +20,35 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "uv";
+<<<<<<< HEAD
   version = "0.6.2";
+||||||| parent of 368ef3af63da (uv: 0.5.31 -> 0.6.0)
+  version = "0.5.31";
+=======
+  version = "0.6.0";
+>>>>>>> 368ef3af63da (uv: 0.5.31 -> 0.6.0)
 
   src = fetchFromGitHub {
     owner = "astral-sh";
     repo = "uv";
     tag = version;
+<<<<<<< HEAD
     hash = "sha256-kzmdxOS5ln9/VIyPIs1mHYGZG5R8KxJDZpX+I6ucsPg=";
+||||||| parent of 368ef3af63da (uv: 0.5.31 -> 0.6.0)
+    hash = "sha256-Gxn/fBXPoehLkKN1PAg31sL/eMxqQMk1+oineuAO17g=";
+=======
+    hash = "sha256-1D1/LY8nJI14nLghYI60a4CFmu8McUIUnxB7SeXPs1o=";
+>>>>>>> 368ef3af63da (uv: 0.5.31 -> 0.6.0)
   };
 
   useFetchCargoVendor = true;
+<<<<<<< HEAD
   cargoHash = "sha256-XoXksl5N8tyJWE/J3N6fFuIrmGaehnmFEKGrMvfzdq0=";
+||||||| parent of 368ef3af63da (uv: 0.5.31 -> 0.6.0)
+  cargoHash = "sha256-dop61TB9w2r+our4DiKzPvw9lI07cx9bT0Ujtvhko1E=";
+=======
+  cargoHash = "sha256-2XLkMk6IsWho/BlPr+uxfuliAsTDat+nY0h/MJN8sXU=";
+>>>>>>> 368ef3af63da (uv: 0.5.31 -> 0.6.0)
 
   buildInputs = [
     rust-jemalloc-sys
