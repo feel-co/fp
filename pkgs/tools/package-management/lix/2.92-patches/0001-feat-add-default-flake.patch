@@ -1,0 +1,278 @@
+From 18fa738d5d14ebaf512bd72f6f2b0a4dc785fa74 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=A9clairevoyant?=
+ <848000+eclairevoyant@users.noreply.github.com>
+Date: Sun, 6 Apr 2025 00:03:46 -0400
+Subject: [PATCH 1/5] feat: add default-flake
+
+---
+ lix/libcmd/installables.cc        | 44 ++++++++++++++++++++++++++-----
+ lix/libcmd/installables.hh        | 11 ++++++++
+ lix/nix/search.cc                 | 30 ++++++++++++++++++---
+ tests/functional/flakes/flakes.sh |  2 +-
+ tests/functional/search.sh        | 26 +++++++++---------
+ 5 files changed, 88 insertions(+), 25 deletions(-)
+
+diff --git a/lix/libcmd/installables.cc b/lix/libcmd/installables.cc
+index 1bf630883..1f271cf8b 100644
+--- a/lix/libcmd/installables.cc
++++ b/lix/libcmd/installables.cc
+@@ -37,6 +37,23 @@ void completeFlakeInputPath(
+     }
+ }
+ 
++std::string InstallablesSettings::getDefaultFlake(std::string_view url)
++{
++    std::string res = defaultFlake;
++    if (res == "") {
++        throw UsageError("don't know how to handle installable '%s' without flake URL, because the option 'default-flake' is not set", url);
++    }
++    return res;
++}
++
++InstallablesSettings installablesSettings;
++
++static GlobalConfig::Register rInstallablesSettings(&installablesSettings);
++
++const static std::regex attrPathRegex(
++    R"((?:[a-zA-Z0-9_"-][a-zA-Z0-9_".-]*(?:\^((\*)|([a-z]+(,[a-z]+)*)))?))",
++    std::regex::ECMAScript);
++
+ MixFlakeOptions::MixFlakeOptions()
+ {
+     auto category = "Common flake-related options";
+@@ -278,20 +295,23 @@ void completeFlakeRefWithFragment(
+     /* Look for flake output attributes that match the
+        prefix. */
+     try {
++        bool isAttrPath = std::regex_match(prefix.begin(), prefix.end(), attrPathRegex);
+         auto hash = prefix.find('#');
+         if (hash == std::string::npos) {
+             completeFlakeRef(completions, evaluator->store, prefix);
+-        } else {
++        }
++        if (isAttrPath || hash != std::string::npos) {
+             completions.setType(AddCompletions::Type::Attrs);
+ 
+-            auto fragment = prefix.substr(hash + 1);
++            auto fragment = isAttrPath ? prefix : prefix.substr(hash + 1);
+             std::string prefixRoot = "";
+             if (fragment.starts_with(".")){
+                 fragment = fragment.substr(1);
+                 prefixRoot = ".";
+             }
+-            auto flakeRefS = std::string(prefix.substr(0, hash));
+-            auto flakeRef = parseFlakeRef(expandTilde(flakeRefS), absPath("."));
++            auto flakeRefS = isAttrPath ? std::string(installablesSettings.getDefaultFlake(prefix)) : expandTilde(std::string(prefix.substr(0, hash)));
++            // FIXME: do tilde expansion.
++            auto flakeRef = parseFlakeRef(flakeRefS, isAttrPath ? std::optional<std::string>{} : absPath("."));
+ 
+             auto evalCache = openEvalCache(
+                 *evaluator,
+@@ -327,7 +347,11 @@ void completeFlakeRefWithFragment(
+                         auto attrPath2 = (*attr)->getAttrPath(evalState, attr2s);
+                         /* Strip the attrpath prefix. */
+                         attrPath2.erase(attrPath2.begin(), attrPath2.begin() + attrPathPrefix.size());
+-                        completions.add(flakeRefS + "#" + prefixRoot + concatStringsSep(".", attrPath2));
++                        std::string resolvedAttrPath2 = prefixRoot + concatStringsSep(".", attrPath2);
++                        if (isAttrPath)
++                            completions.add(resolvedAttrPath2);
++                        else
++                            completions.add(flakeRefS + "#" + resolvedAttrPath2);
+                     }
+                 }
+             }
+@@ -364,7 +388,7 @@ void completeFlakeRef(AddCompletions & completions, ref<Store> store, std::strin
+             if (!prefix.starts_with("flake:") && from.starts_with("flake:")) {
+                 std::string from2(from, 6);
+                 if (from2.starts_with(prefix))
+-                    completions.add(from2);
++                    completions.add(from2 + "#");
+             } else {
+                 if (from.starts_with(prefix))
+                     completions.add(from);
+@@ -489,7 +513,13 @@ Installables SourceExprCommand::parseInstallables(
+             }
+ 
+             try {
+-                auto [flakeRef, fragment] = parseFlakeRefWithFragment(std::string { prefix }, absPath("."));
++                bool isAttrPath = std::regex_match(std::string { prefix }, attrPathRegex);
++
++                auto [flakeRef, fragment] =
++                    isAttrPath
++                    ? std::pair { parseFlakeRef(installablesSettings.getDefaultFlake(s), {}), std::string { prefix } }
++                    : parseFlakeRefWithFragment(std::string { prefix }, absPath("."));
++
+                 result.push_back(make_ref<InstallableFlake>(
+                         this,
+                         getEvaluator(),
+diff --git a/lix/libcmd/installables.hh b/lix/libcmd/installables.hh
+index 423ea33d8..1c95e422c 100644
+--- a/lix/libcmd/installables.hh
++++ b/lix/libcmd/installables.hh
+@@ -13,6 +13,17 @@
+ 
+ namespace nix {
+ 
++
++struct InstallablesSettings : Config
++{
++    Setting<std::string> defaultFlake{this, "", "default-flake",
++        "The default flake URL when using the command line interface"};
++
++    std::string getDefaultFlake(std::string_view url);
++};
++
++extern InstallablesSettings installablesSettings;
++
+ struct DrvInfo;
+ 
+ enum class Realise {
+diff --git a/lix/nix/search.cc b/lix/nix/search.cc
+index d51f53f09..8283b115a 100644
+--- a/lix/nix/search.cc
++++ b/lix/nix/search.cc
+@@ -23,8 +23,9 @@ std::string wrap(std::string prefix, std::string s)
+     return concatStrings(prefix, s, ANSI_NORMAL);
+ }
+ 
+-struct CmdSearch : InstallableCommand, MixJSON
++struct CmdSearch : SourceExprCommand, MixJSON
+ {
++    std::string _installable{installablesSettings.defaultFlake};
+     std::vector<std::string> res;
+     std::vector<std::string> excludeRes;
+ 
+@@ -40,6 +41,23 @@ struct CmdSearch : InstallableCommand, MixJSON
+                 excludeRes.push_back(s);
+             }},
+         });
++        bool hasInstallable = false;
++
++        addFlag({
++            .longName = "installable",
++            .shortName = 'i',
++            .description = "Search within this installable",
++            .labels = {"installable"},
++            .handler = {[this, &hasInstallable](std::string ss) {
++                hasInstallable = true;
++                _installable = ss;
++            }},
++            .completer = completePath
++        });
++
++        if (hasInstallable && (file || expr)) {
++            throw UsageError("'--installable' cannot be used together with '--file' or '--expr'");
++        }
+     }
+ 
+     std::string description() override
+@@ -62,16 +80,18 @@ struct CmdSearch : InstallableCommand, MixJSON
+         };
+     }
+ 
+-    void run(ref<Store> store, ref<Installable> installable) override
++    void run(ref<Store> store) override
+     {
+-        auto const installableValue = InstallableValue::require(installable);
++        if (_installable == "" && ! file && ! expr) {
++            throw UsageError("nothing to search from, set 'default-flake' option or specify one of '--installable', '--file', '--expr'");
++        }
+ 
+         settings.readOnlyMode = true;
+         evalSettings.enableImportFromDerivation.setDefault(false);
+ 
+         // Recommend "^" here instead of ".*" due to differences in resulting highlighting
+         if (res.empty())
+-            throw UsageError("Must provide at least one regex! To match all packages, use '%s'.", "nix search <installable> ^");
++            throw UsageError("Must provide at least one regex! To match all packages, use '%s'.", "nix search ^", "nix search <installable> ^");
+ 
+         std::vector<std::regex> regexes;
+         std::vector<std::regex> excludeRegexes;
+@@ -192,6 +212,8 @@ struct CmdSearch : InstallableCommand, MixJSON
+             }
+         };
+ 
++        auto const installableValue = InstallableValue::require(parseInstallable(*state, store, (file || expr) ? "" : _installable));
++
+         for (auto & cursor : installableValue->getCursors(*state))
+             visit(*cursor, cursor->getAttrPath(*state), true);
+ 
+diff --git a/tests/functional/flakes/flakes.sh b/tests/functional/flakes/flakes.sh
+index 85ffacf70..e98faa4b8 100644
+--- a/tests/functional/flakes/flakes.sh
++++ b/tests/functional/flakes/flakes.sh
+@@ -116,7 +116,7 @@ nix build -o $TEST_ROOT/result flake1#foo
+ [[ -e $TEST_ROOT/result/hello ]]
+ 
+ # Test packages.default.
+-nix build -o $TEST_ROOT/result flake1
++nix build -o $TEST_ROOT/result flake1#
+ [[ -e $TEST_ROOT/result/hello ]]
+ 
+ nix build -o $TEST_ROOT/result $flake1Dir
+diff --git a/tests/functional/search.sh b/tests/functional/search.sh
+index 1a2a20089..e5171810b 100644
+--- a/tests/functional/search.sh
++++ b/tests/functional/search.sh
+@@ -3,29 +3,29 @@ source common.sh
+ clearStore
+ clearCache
+ 
+-(( $(nix search -f search.nix '' hello | wc -l) > 0 ))
++(( $(nix search -f search.nix hello | wc -l) > 0 ))
+ 
+ # Check descriptions are searched
+-(( $(nix search -f search.nix '' broken | wc -l) > 0 ))
++(( $(nix search -f search.nix broken | wc -l) > 0 ))
+ 
+ # Check search that matches nothing
+-(( $(nix search -f search.nix '' nosuchpackageexists | wc -l) == 0 ))
++(( $(nix search -f search.nix nosuchpackageexists | wc -l) == 0 ))
+ 
+ # Search for multiple arguments
+-(( $(nix search -f search.nix '' hello empty | wc -l) == 2 ))
++(( $(nix search -f search.nix hello empty | wc -l) == 2 ))
+ 
+ # Multiple arguments will not exist
+-(( $(nix search -f search.nix '' hello broken | wc -l) == 0 ))
++(( $(nix search -f search.nix hello broken | wc -l) == 0 ))
+ 
+ # No regex should return an error
+-(( $(nix search -f search.nix '' | wc -l) == 0 ))
++(( $(nix search -f search.nix | wc -l) == 0 ))
+ 
+ ## Search expressions
+ 
+ # Check that empty search string matches all
+-nix search -f search.nix '' ^ | grepQuiet foo
+-nix search -f search.nix '' ^ | grepQuiet bar
+-nix search -f search.nix '' ^ | grepQuiet hello
++nix search -f search.nix ^ | grepQuiet foo
++nix search -f search.nix ^ | grepQuiet bar
++nix search -f search.nix ^ | grepQuiet hello
+ 
+ ## Tests for multiple regex/match highlighting
+ 
+@@ -33,15 +33,15 @@ nix search -f search.nix '' ^ | grepQuiet hello
+ export CLICOLOR_FORCE=1
+ e=$'\x1b' # grep doesn't support \e, \033 or even \x1b
+ # Multiple overlapping regexes
+-(( $(nix search -f search.nix '' 'oo' 'foo' 'oo' | grep -c "$e\[32;1mfoo$e\\[0;1m") == 1 ))
+-(( $(nix search -f search.nix '' 'broken b' 'en bar' | grep -c "$e\[32;1mbroken bar$e\\[0m") == 1 ))
++(( $(nix search -f search.nix 'oo' 'foo' 'oo' | grep -c "$e\[32;1mfoo$e\\[0;1m") == 1 ))
++(( $(nix search -f search.nix 'broken b' 'en bar' | grep -c "$e\[32;1mbroken bar$e\\[0m") == 1 ))
+ 
+ # Multiple matches
+ # Searching for 'o' should yield the 'o' in 'broken bar', the 'oo' in foo and 'o' in hello
+-(( $(nix search -f search.nix '' 'o' | grep -Eoc "$e\[32;1mo{1,2}$e\[(0|0;1)m") == 3 ))
++(( $(nix search -f search.nix 'o' | grep -Eoc "$e\[32;1mo{1,2}$e\[(0|0;1)m") == 3 ))
+ # Searching for 'b' should yield the 'b' in bar and the two 'b's in 'broken bar'
+ # NOTE: This does not work with `grep -c` because it counts the two 'b's in 'broken bar' as one matched line
+-(( $(nix search -f search.nix '' 'b' | grep -Eo "$e\[32;1mb$e\[(0|0;1)m" | wc -l) == 3 ))
++(( $(nix search -f search.nix 'b' | grep -Eo "$e\[32;1mb$e\[(0|0;1)m" | wc -l) == 3 ))
+ 
+ ## Tests for --exclude
+ (( $(nix search -f search.nix ^ -e hello | grep -c hello) == 0 ))
+-- 
+2.47.0
+

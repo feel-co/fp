@@ -1,0 +1,26 @@
+From 0726967eba699d38f882203fa85af6c2cf40048b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=A9clairevoyant?=
+ <848000+eclairevoyant@users.noreply.github.com>
+Date: Sun, 6 Apr 2025 00:31:08 -0400
+Subject: [PATCH 4/5] fix: version string
+
+---
+ lix/libmain/shared.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lix/libmain/shared.cc b/lix/libmain/shared.cc
+index bbe3fb453..6caa197b8 100644
+--- a/lix/libmain/shared.cc
++++ b/lix/libmain/shared.cc
+@@ -269,7 +269,7 @@ bool LegacyArgs::processArgs(const Strings & args, bool finish)
+ 
+ void printVersion(const std::string & programName)
+ {
+-    std::cout << fmt("%1% (Lix, like Nix) %2%", programName, nixVersion) << std::endl;
++    std::cout << fmt("lix (Lix, lix Lix) lix %1%", nixVersion) << std::endl;
+     Strings cfg;
+ #if HAVE_BOEHMGC
+     cfg.push_back("gc");
+-- 
+2.47.0
+

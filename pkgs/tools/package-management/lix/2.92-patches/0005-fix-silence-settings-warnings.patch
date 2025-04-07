@@ -1,0 +1,65 @@
+From 144b7ac0c4481808780994ac8332f928ec17f854 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=A9clairevoyant?=
+ <848000+eclairevoyant@users.noreply.github.com>
+Date: Sun, 6 Apr 2025 00:35:20 -0400
+Subject: [PATCH 5/5] fix: silence settings warnings
+
+---
+ lix/libutil/config.cc    | 4 ----
+ tests/functional/eval.sh | 3 ---
+ tests/functional/misc.sh | 9 ---------
+ 3 files changed, 16 deletions(-)
+
+diff --git a/lix/libutil/config.cc b/lix/libutil/config.cc
+index ebc45ff13..a27c30630 100644
+--- a/lix/libutil/config.cc
++++ b/lix/libutil/config.cc
+@@ -69,8 +69,6 @@ AbstractConfig::AbstractConfig(StringMap initials)
+ 
+ void AbstractConfig::warnUnknownSettings()
+ {
+-    for (const auto & s : unknownSettings)
+-        warn("unknown setting '%s'", s.first);
+ }
+ 
+ void AbstractConfig::reapplyUnknownSettings()
+@@ -342,8 +340,6 @@ template<> ExperimentalFeatures BaseSetting<ExperimentalFeatures>::parse(const s
+     for (auto & s : tokenizeString<StringSet>(str)) {
+         if (auto thisXpFeature = parseExperimentalFeature(s); thisXpFeature)
+             res = res | thisXpFeature.value();
+-        else
+-            warn("unknown experimental feature '%s'", s);
+     }
+     return res;
+ }
+diff --git a/tests/functional/eval.sh b/tests/functional/eval.sh
+index ae6fcec63..836539b30 100644
+--- a/tests/functional/eval.sh
++++ b/tests/functional/eval.sh
+@@ -52,6 +52,3 @@ ln -sfn ../xyzzy $TEST_ROOT/foo/bar
+ printf 123 > $TEST_ROOT/xyzzy/default.nix
+ [[ $(nix eval --impure --expr "import $TEST_ROOT/foo/bar") = 123 ]]
+ 
+-# Test that unknown settings are warned about
+-out="$(expectStderr 0 nix eval --option foobar baz --expr '""' --raw)"
+-[[ "$(echo "$out" | grep foobar | wc -l)" = 1 ]]
+diff --git a/tests/functional/misc.sh b/tests/functional/misc.sh
+index b142fdc93..bcc520dd9 100644
+--- a/tests/functional/misc.sh
++++ b/tests/functional/misc.sh
+@@ -23,12 +23,3 @@ echo $eval_arg_res | grep "infinite recursion encountered"
+ eval_stdin_res=$(echo 'let a = {} // a; in a.foo' | nix-instantiate --eval -E - 2>&1 || true)
+ echo $eval_stdin_res | grep "at «stdin»:1:15:"
+ echo $eval_stdin_res | grep "infinite recursion encountered"
+-
+-# Unknown setting warning
+-# NOTE(cole-h): behavior is different depending on the order, which is why we test an unknown option
+-# before and after the `'{}'`!
+-out="$(expectStderr 0 nix-instantiate --option foobar baz --expr '{}')"
+-[[ "$(echo "$out" | grep foobar | wc -l)" = 1 ]]
+-
+-out="$(expectStderr 0 nix-instantiate '{}' --option foobar baz --expr )"
+-[[ "$(echo "$out" | grep foobar | wc -l)" = 1 ]]
+-- 
+2.47.0
+

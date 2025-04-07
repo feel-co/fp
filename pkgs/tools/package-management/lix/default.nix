@@ -168,6 +168,14 @@ lib.makeExtensible (self: {
         allowGitDependencies = false;
         hash = "sha256-YMyNOXdlx0I30SkcmdW/6DU0BYc3ZOa2FMJSKMkr7I8=";
       };
+
+      patches = [
+          2.92-patches/0001-feat-add-default-flake.patch
+          2.92-patches/0002-feat-add-builtins.bitShift.patch
+          2.92-patches/0003-feat-add-reject-flake-config-setting-to-reject-all-n.patch
+          2.92-patches/0004-fix-version-string.patch
+          2.92-patches/0005-fix-silence-settings-warnings.patch
+      ];
     };
 
     nix-eval-jobs-args = rec {
