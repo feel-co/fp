@@ -1,0 +1,59 @@
+From 16ba31ba62b8d5dea67ea4d22e1bc43ea39592f9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=A9clairevoyant?=
+ <848000+eclairevoyant@users.noreply.github.com>
+Date: Sun, 6 Apr 2025 00:29:28 -0400
+Subject: [PATCH 3/5] feat: add reject-flake-config setting to reject all nix
+ config from flakes
+
+---
+ lix/libexpr/flake/config.cc                     | 5 +++++
+ lix/libfetchers/meson.build                     | 1 +
+ lix/libfetchers/settings/reject-flake-config.md | 8 ++++++++
+ 3 files changed, 14 insertions(+)
+ create mode 100644 lix/libfetchers/settings/reject-flake-config.md
+
+diff --git a/lix/libexpr/flake/config.cc b/lix/libexpr/flake/config.cc
+index 9ef84c6c85..f1f26c85e5 100644
+--- a/lix/libexpr/flake/config.cc
++++ b/lix/libexpr/flake/config.cc
+@@ -84,6 +84,11 @@ void ConfigFile::apply()
+         else
+             assert(false);
+ 
++        if (nix::fetchSettings.rejectFlakeConfig) {
++            warn("ignoring untrusted flake configuration setting '%s' due to the '%s' setting.", name, "reject-flake-config");
++            continue;
++        }
++
+         bool trusted = whitelist.count(baseName);
+         if (!trusted) {
+             switch (nix::fetchSettings.acceptFlakeConfig.get()) {
+diff --git a/lix/libfetchers/meson.build b/lix/libfetchers/meson.build
+index 95c1107360..226cf873b3 100644
+--- a/lix/libfetchers/meson.build
++++ b/lix/libfetchers/meson.build
+@@ -28,6 +28,7 @@ libfetchers_setting_definitions = files(
+   'settings/allow-dirty.md',
+   'settings/commit-lockfile-summary.md',
+   'settings/flake-registry.md',
++  'settings/reject-flake-config.md',
+   'settings/use-registries.md',
+   'settings/warn-dirty.md',
+ )
+diff --git a/lix/libfetchers/settings/reject-flake-config.md b/lix/libfetchers/settings/reject-flake-config.md
+new file mode 100644
+index 0000000000..166e9d4af1
+--- /dev/null
++++ b/lix/libfetchers/settings/reject-flake-config.md
+@@ -0,0 +1,8 @@
++---
++name: reject-flake-config
++internalName: rejectFlakeConfig
++type: bool
++default: false
++experimentalFeature: flakes
++---
++Whether to reject nix configuration (including whitelisted settings) from a flake without repeated prompting.
+-- 
+2.51.0
+

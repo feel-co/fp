@@ -209,6 +209,12 @@ lib.makeExtensible (
             url = "https://git.lix.systems/lix-project/lix/commit/b6d5670bcffebdd43352ea79b36135e35a8148d9.patch";
             hash = "sha256-f4s0TR5MhNMNM5TYLOR7K2/1rtZ389KDjTCKFVK0OcE=";
           })
+
+          2.93-patches/0001-feat-add-default-flake.patch
+          2.93-patches/0002-feat-add-builtins.bitShift.patch
+          2.93-patches/0003-feat-add-reject-flake-config-setting-to-reject-all-n.patch
+          2.93-patches/0004-fix-version-string.patch
+          2.93-patches/0005-fix-silence-settings-warnings.patch
         ];
       };
     };

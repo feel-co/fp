@@ -1,0 +1,118 @@
+From 67518b507eb66143abeddeceacdeffa8ee0b4b93 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=A9clairevoyant?=
+ <848000+eclairevoyant@users.noreply.github.com>
+Date: Sun, 6 Apr 2025 00:15:16 -0400
+Subject: [PATCH 2/5] feat: add builtins.bitShift
+
+Change-Id: Idf169a6cfc5f8c7b80bb9603d57984f92cec4cdb
+---
+ doc/manual/redirects.js                        |  1 +
+ lix/libexpr/builtins/bitShift.md               |  5 +++++
+ lix/libexpr/meson.build                        |  1 +
+ lix/libexpr/primops.cc                         | 16 ++++++++++++++++
+ tests/functional/lang/eval-okay-arithmetic.exp |  2 +-
+ tests/functional/lang/eval-okay-arithmetic.nix |  1 +
+ tests/unit/libexpr/primops.cc                  |  5 +++++
+ 7 files changed, 30 insertions(+), 1 deletion(-)
+ create mode 100644 lix/libexpr/builtins/bitShift.md
+
+diff --git a/doc/manual/redirects.js b/doc/manual/redirects.js
+index 7a61de6434..53b912c90e 100644
+--- a/doc/manual/redirects.js
++++ b/doc/manual/redirects.js
+@@ -166,6 +166,7 @@ const redirects = {
+     "builtin-baseNameOf": "language/builtins.html#builtins-baseNameOf",
+     "builtin-bitAnd": "language/builtins.html#builtins-bitAnd",
+     "builtin-bitOr": "language/builtins.html#builtins-bitOr",
++    "builtin-bitShift": "language/builtins.html#builtins-bitShift",
+     "builtin-bitXor": "language/builtins.html#builtins-bitXor",
+     "builtin-builtins": "language/builtins.html#builtins-builtins",
+     "builtin-compareVersions": "language/builtins.html#builtins-compareVersions",
+diff --git a/lix/libexpr/builtins/bitShift.md b/lix/libexpr/builtins/bitShift.md
+new file mode 100644
+index 0000000000..29bc1bf40a
+--- /dev/null
++++ b/lix/libexpr/builtins/bitShift.md
+@@ -0,0 +1,5 @@
++---
++name: bitShift
++args: [e1, e2]
++---
++Return the integer *e1* bitwise-shifted left by *e2* bits.
+diff --git a/lix/libexpr/meson.build b/lix/libexpr/meson.build
+index 9b029e5621..0a8458d2fb 100644
+--- a/lix/libexpr/meson.build
++++ b/lix/libexpr/meson.build
+@@ -58,6 +58,7 @@ builtin_definitions = files(
+   'builtins/baseNameOf.md',
+   'builtins/bitAnd.md',
+   'builtins/bitOr.md',
++  'builtins/bitShift.md',
+   'builtins/bitXor.md',
+   'builtins/break.md',
+   'builtins/catAttrs.md',
+diff --git a/lix/libexpr/primops.cc b/lix/libexpr/primops.cc
+index 2fae741949..1e9a8f7ce8 100644
+--- a/lix/libexpr/primops.cc
++++ b/lix/libexpr/primops.cc
+@@ -2466,6 +2466,22 @@ static void prim_bitXor(EvalState & state, Value * * args, Value & v)
+     v.mkInt(i1.value ^ i2.value);
+ }
+ 
++static void prim_bitShift(EvalState & state, Value * * args, Value & v)
++{
++    NixInt e1 = state.forceInt(*args[0], noPos, "while evaluating the first argument passed to builtins.bitShift");
++    NixInt e2 = state.forceInt(*args[1], noPos, "while evaluating the second argument passed to builtins.bitShift");
++    NixInt res = NixInt{0};
++
++    if (e2.value == 0)
++        res = e1;
++    else if (e2.value > 0)
++        res = NixInt{e1.value << e2.value};
++    else
++        res = NixInt{e1.value >> (-(e2.value))};
++
++    v.mkInt(res);
++}
++
+ static void prim_lessThan(EvalState & state, Value * * args, Value & v)
+ {
+     state.forceValue(*args[0], noPos);
+diff --git a/tests/functional/lang/eval-okay-arithmetic.exp b/tests/functional/lang/eval-okay-arithmetic.exp
+index 5c54d10b7b..6edc5b6772 100644
+--- a/tests/functional/lang/eval-okay-arithmetic.exp
++++ b/tests/functional/lang/eval-okay-arithmetic.exp
+@@ -1 +1 @@
+-2216
++2224
+diff --git a/tests/functional/lang/eval-okay-arithmetic.nix b/tests/functional/lang/eval-okay-arithmetic.nix
+index 534e9d169d..413c84fd1f 100644
+--- a/tests/functional/lang/eval-okay-arithmetic.nix
++++ b/tests/functional/lang/eval-okay-arithmetic.nix
+@@ -30,6 +30,7 @@ in
+       (builtins.bitAnd 12 10) # 0b1100 & 0b1010 =  8
+       (builtins.bitOr  12 10) # 0b1100 | 0b1010 = 14
+       (builtins.bitXor 12 10) # 0b1100 ^ 0b1010 =  6
++      (builtins.bitShift 1 3) # 0b0001 << 3     =  8
+ 
+       (if 3 < 7 then 1 else err)
+       (if 7 < 3 then err else 1)
+diff --git a/tests/unit/libexpr/primops.cc b/tests/unit/libexpr/primops.cc
+index e6b6482159..246ccf0b1f 100644
+--- a/tests/unit/libexpr/primops.cc
++++ b/tests/unit/libexpr/primops.cc
+@@ -500,6 +500,11 @@ namespace nix {
+         ASSERT_THAT(v, IsIntEq(1));
+     }
+ 
++    TEST_F(PrimOpTest, bitShift) {
++        auto v = eval("builtins.bitShift 3 3");
++        ASSERT_THAT(v, IsIntEq(24));
++    }
++
+     TEST_F(PrimOpTest, lessThanFalse) {
+         auto v = eval("builtins.lessThan 3 1");
+         ASSERT_THAT(v, IsFalse());
+-- 
+2.51.0
+
