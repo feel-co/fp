@@ -116,7 +116,7 @@ index 423ea33d8..1c95e422c 100644
 +
 +struct InstallablesSettings : Config
 +{
-+    Setting<std::string> defaultFlake{this, "", "default-flake",
++    Setting<std::string> defaultFlake{this, "nixpkgs", "default-flake",
 +        "The default flake URL when using the command line interface"};
 +
 +    std::string getDefaultFlake(std::string_view url);
