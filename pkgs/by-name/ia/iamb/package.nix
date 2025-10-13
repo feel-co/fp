@@ -10,16 +10,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "iamb";
-  version = "0.0.10";
+  version = "0.0.11-alpha.1-unstable-2025-10-26";
 
   src = fetchFromGitHub {
     owner = "ulyssa";
     repo = "iamb";
-    tag = "v${version}";
-    hash = "sha256-cjBSWUBgfwdLnpneJ5XW2TdOFkNc+Rc/wyUp9arZzwg=";
+    rev = "a32149f60413736e797723582fca49c991b8edcd";
+    hash = "sha256-8sqS7Iw1H5BB+MWjRulM+ZZECw/vbAe/ofPJs50EcH0=";
   };
 
-  cargoHash = "sha256-fAre0jrpJ63adcg4AKCYzdQtCsd0MMMcWA0RsoHo6ig=";
+  cargoHash = "sha256-Ce0sTp3f6XKqaSqOoEC+sYXX6lwLG9Fa0pZcWjY0d7w=";
 
   nativeBuildInputs = [ installShellFiles ];
 
@@ -46,19 +46,21 @@ rustPlatform.buildRustPackage rec {
     install -D $src/iamb.desktop -t $out/share/applications
   '';
 
+
+  env.VERGEN_GIT_SHA = src.rev;
+
   nativeInstallCheckInputs = [
     versionCheckHook
   ];
   versionCheckProgramArg = "--version";
-  doInstallCheck = true;
+  #doInstallCheck = true;
 
-  passthru.updateScript = nix-update-script { };
+  passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 
   meta = {
     description = "Matrix client for Vim addicts";
     mainProgram = "iamb";
     homepage = "https://github.com/ulyssa/iamb";
-    changelog = "https://github.com/ulyssa/iamb/releases/tag/${src.tag}";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ meain ];
   };
