@@ -183,7 +183,7 @@ let
         }
 
         # finally start daemon
-        exec wpa_supplicant $args
+        exec wpa_supplicant "$args"
       '';
     };
 
