@@ -4,7 +4,7 @@
   fetchpatch,
   stdenv,
   makeWrapper,
-  gitUpdater,
+  nix-update-script,
   cdrtools,
   curl,
   gawk,
@@ -58,22 +58,14 @@ in
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "quickemu";
-  version = "4.9.7";
+  version = "4.9.7-unstable-2025-11-01";
 
   src = fetchFromGitHub {
     owner = "quickemu-project";
     repo = "quickemu";
-    rev = finalAttrs.version;
-    hash = "sha256-sCoCcN6950pH33bRZsLoLc1oSs5Qfpj9Bbywn/uA6Bc=";
+    rev = "703fe861f8a1be7210e9371f06c35104b5f7469d";
+    hash = "sha256-Eo6XDg/h5e/Bin4wUe8R8RRXguUMvD8M36gUacrslek=";
   };
-
-  patches = [
-    (fetchpatch {
-      name = "correctly-handle-version-10.0.0-of-qemu.patch";
-      url = "https://github.com/quickemu-project/quickemu/commit/f25205f4513c4fa72be6940081c62e613d1fddc6.patch";
-      hash = "sha256-OAXGyhMVDwbUypEPj/eRnH0wZYaL9WLGjbyoobe20UY=";
-    })
-  ];
 
   postPatch = ''
     sed -i \
@@ -109,7 +101,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   passthru = {
     tests = testers.testVersion { package = finalAttrs.finalPackage; };
-    updateScript = gitUpdater { };
+    updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
   };
 
   meta = {
