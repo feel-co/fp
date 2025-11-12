@@ -477,68 +477,6 @@ in
   ###### implementation
 
   config = {
-
-    warnings =
-      let
-        mkOneNetOnlineWarn =
-          typeStr: name: def:
-          lib.optional (
-            lib.elem "network-online.target" def.after
-            && !(lib.elem "network-online.target" (def.wants ++ def.requires ++ def.bindsTo))
-          ) "${name}.${typeStr} is ordered after 'network-online.target' but doesn't depend on it";
-        mkNetOnlineWarns =
-          typeStr: defs: lib.concatLists (lib.mapAttrsToList (mkOneNetOnlineWarn typeStr) defs);
-        mkMountNetOnlineWarns =
-          typeStr: defs: lib.concatLists (map (m: mkOneNetOnlineWarn typeStr m.what m) defs);
-      in
-      concatLists (
-        mapAttrsToList (
-          name: service:
-          let
-            type = service.serviceConfig.Type or "";
-            restart = service.serviceConfig.Restart or "no";
-            hasDeprecated = builtins.hasAttr "StartLimitInterval" service.serviceConfig;
-          in
-          concatLists [
-            (optional (type == "oneshot" && (restart == "always" || restart == "on-success"))
-              "Service '${name}.service' with 'Type=oneshot' cannot have 'Restart=always' or 'Restart=on-success'"
-            )
-            (optional hasDeprecated "Service '${name}.service' uses the attribute 'StartLimitInterval' in the Service section, which is deprecated. See https://github.com/NixOS/nixpkgs/issues/45786.")
-            (optional (service.reloadIfChanged && service.reloadTriggers != [ ])
-              "Service '${name}.service' has both 'reloadIfChanged' and 'reloadTriggers' set. This is probably not what you want, because 'reloadTriggers' behave the same whay as 'restartTriggers' if 'reloadIfChanged' is set."
-            )
-          ]
-        ) cfg.services
-      )
-      ++ (mkNetOnlineWarns "target" cfg.targets)
-      ++ (mkNetOnlineWarns "service" cfg.services)
-      ++ (mkNetOnlineWarns "socket" cfg.sockets)
-      ++ (mkNetOnlineWarns "timer" cfg.timers)
-      ++ (mkNetOnlineWarns "path" cfg.paths)
-      ++ (mkMountNetOnlineWarns "mount" cfg.mounts)
-      ++ (mkMountNetOnlineWarns "automount" cfg.automounts)
-      ++ (mkNetOnlineWarns "slice" cfg.slices);
-
-    assertions = concatLists (
-      mapAttrsToList (
-        name: service:
-        map
-          (message: {
-            assertion = false;
-            inherit message;
-          })
-          (concatLists [
-            (optional
-              (
-                (builtins.elem "network-interfaces.target" service.after)
-                || (builtins.elem "network-interfaces.target" service.wants)
-              )
-              "Service '${name}.service' is using the deprecated target network-interfaces.target, which no longer exists. Using network.target is recommended instead."
-            )
-          ])
-      ) cfg.services
-    );
-
     system.build.units = cfg.units;
 
     system.nssModules = [ cfg.package.out ];
