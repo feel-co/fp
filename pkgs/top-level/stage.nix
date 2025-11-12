@@ -365,7 +365,7 @@ let
       autoCalledPackages
       allPackages
       otherPackageSets
-      aliases
+      #aliases
       variants
       configOverrides
       internallyDisallowedAttrPathsOverlay
