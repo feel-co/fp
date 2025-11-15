@@ -166,7 +166,7 @@ rec {
         libsm
         libice
         freetype
-        curlWithGnuTls
+        curl
         nspr
         nss
         fontconfig
