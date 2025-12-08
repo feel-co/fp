@@ -2,6 +2,7 @@
   lib,
   config,
   stdenv,
+  fetchpatch2,
   fetchFromGitHub,
   cmake,
   removeReferencesTo,
@@ -24,6 +25,14 @@ stdenv.mkDerivation (finalAttrs: {
     tag = "v${finalAttrs.version}";
     hash = "sha256-3gECGBSWcGTYQkUlD4X2zrxZVvH2x2xfh5zdZ2jJbDQ=";
   };
+
+  patches = [
+    (fetchpatch2 {
+      name = "themes-load-save-by-name-if-possible.patch";
+      url = "https://github.com/aristocratos/btop/pull/1390/commits/30b3868787b7f6c1b83a0e790a5e6ee6c28de28c.patch";
+      hash = "sha256-ql/KUwbTU+uChIIlEjJOEArHRauuw996kuXXAcEptDM=";
+    })
+  ];
 
   nativeBuildInputs = [
     cmake
