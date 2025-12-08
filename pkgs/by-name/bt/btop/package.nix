@@ -25,6 +25,10 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-3gECGBSWcGTYQkUlD4X2zrxZVvH2x2xfh5zdZ2jJbDQ=";
   };
 
+  patches = [
+    ./0001-themes-load-save-by-name-if-possible.patch
+  ];
+
   nativeBuildInputs = [
     cmake
   ]
