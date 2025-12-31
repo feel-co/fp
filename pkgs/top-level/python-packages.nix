@@ -22468,6 +22468,8 @@ self: super: with self; {
 
   veryprettytable = callPackage ../development/python-modules/veryprettytable { };
 
+  verysimpletree = callPackage ../development/python-modules/verysimpletree { };
+
   vfblib = callPackage ../development/python-modules/vfblib { };
 
   vg = callPackage ../development/python-modules/vg { };
