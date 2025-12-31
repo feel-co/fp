@@ -11511,6 +11511,8 @@ self: super: with self; {
 
   musicbrainzngs = callPackage ../development/python-modules/musicbrainzngs { };
 
+  musicxml = callPackage ../development/python-modules/musicxml { };
+
   mutagen = callPackage ../development/python-modules/mutagen { };
 
   mutatormath = callPackage ../development/python-modules/mutatormath { };
