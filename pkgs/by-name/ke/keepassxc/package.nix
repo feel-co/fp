@@ -65,7 +65,10 @@ stdenv.mkDerivation (finalAttrs: {
     ];
   };
 
-  patches = [ ./darwin-remove-macdeployqt.patch ];
+  patches = [
+    ./darwin-remove-macdeployqt.patch
+    ./disable-config-warning.patch
+  ];
 
   # Upstream develops against a build of PCSC from Xcode.
   # The types are incompatible with nixpkgs pcsclite.
