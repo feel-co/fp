@@ -67,7 +67,10 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   patches = [
+   
     ./darwin-remove-macdeployqt.patch
+    ./disable-config-warning.patch
+ 
     # Botan 3.14 randomizes ECDSA signatures by default, which breaks
     # TestPasskeys' hardcoded signatures; verify the signatures instead.
     # Backported from develop, remove on next version bump.
