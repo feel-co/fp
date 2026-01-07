@@ -30,6 +30,10 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
     python3
   ];
 
+  patches = [
+    ./0001-don-t-write-config.patch
+  ];
+
   # npm install will error when electron tries to download its binary
   # we don't need it anyways since we wrap the program with our nixpkgs electron
   env.ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
