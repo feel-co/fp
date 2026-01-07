@@ -1,0 +1,56 @@
+From 949aefb2d628eec014a27a443de2c326ddf8b3ea Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=A9clairevoyant?=
+ <848000+eclairevoyant@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 10:22:14 -0400
+Subject: [PATCH] don't write config
+
+---
+ sources/code/main/modules/config.ts | 13 ++++---------
+ 1 file changed, 4 insertions(+), 9 deletions(-)
+
+diff --git a/sources/code/main/modules/config.ts b/sources/code/main/modules/config.ts
+index 516e55e..78688ea 100644
+--- a/sources/code/main/modules/config.ts
++++ b/sources/code/main/modules/config.ts
+@@ -2,7 +2,7 @@
+  * configManager
+  */
+ 
+-import { readFileSync, existsSync, rmSync, writeFileSync } from "fs";
++import { readFileSync, existsSync, rmSync } from "fs";
+ import {
+   app,
+   BrowserWindow,
+@@ -151,10 +151,7 @@ class Config<T> {
+   protected spaces = 4;
+   #write(object: unknown) {
+     const decodedData = JSON.stringify(object, null, this.spaces);
+-    let encodedData:string|Buffer = decodedData;
+-    if(this.#pathExtension === FileExt.Encrypted)
+-      encodedData = safeStorage.encryptString(decodedData);
+-    writeFileSync(this.#path+this.#pathExtension,encodedData);
++    console.debug("[eclairevoyant] ignoring change: "+(decodedData));
+   }
+   #read(): unknown {
+     const encodedData = readFileSync(this.#path+this.#pathExtension);
+@@ -179,9 +176,7 @@ class Config<T> {
+    */
+ 
+   public set value(object: PartialRecursive<T>) {
+-    const value = typeMerge(this.value, {nullType: Boolean}, object);
+-    this.#write(value);
+-    this.#cache = value;
++    console.debug("[eclairevoyant] ignoring change: "+(object));
+   }
+   /** Returns the entire parsed configuration file in form of the JavaScript object. */
+   public get value(): Readonly<T> {
+@@ -326,4 +321,4 @@ void import("electron/main")
+       if(event.senderFrame && new URL(event.senderFrame.url).protocol === "file:")
+         appConfig.value = config;
+     })
+-  );
+\ No newline at end of file
++  );
+-- 
+2.55.0
+
