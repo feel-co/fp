@@ -63,7 +63,10 @@ stdenv.mkDerivation (finalAttrs: {
     };
 
   patches = [
+   
     ./darwin-remove-macdeployqt.patch
+    ./disable-config-warning.patch
+ 
 
     (fetchpatch2 {
       name = "CVE-2026-69150.patch";

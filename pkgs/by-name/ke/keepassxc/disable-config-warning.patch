@@ -1,0 +1,27 @@
+--- result/src/gui/MainWindow.cpp	1969-12-31 19:00:01.000000000 -0500
++++ ./MainWindow.cpp	2025-02-14 16:57:45.053041814 -0500
+@@ -660,11 +660,6 @@
+     m_trayIconTriggerTimer.setSingleShot(true);
+     connect(&m_trayIconTriggerTimer, SIGNAL(timeout()), SLOT(processTrayIconTrigger()));
+ 
+-    if (config()->hasAccessError()) {
+-        m_ui->globalMessageWidget->showMessage(tr("Access error for config file %1").arg(config()->getFileName()),
+-                                               MessageWidget::Error);
+-    }
+-
+     // Properly shutdown on logoff, restart, and shutdown
+     connect(qApp, &QGuiApplication::commitDataRequest, this, [this] { m_appExitCalled = true; });
+ 
+--- result/src/gui/ApplicationSettingsWidget.cpp	1969-12-31 19:00:01.000000000 -0500
++++ /home/jelly3781/ApplicationSettingsWidget.cpp	2025-02-15 08:44:38.404084198 -0500
+@@ -180,10 +180,6 @@
+ 
+ void ApplicationSettingsWidget::loadSettings()
+ {
+-    if (config()->hasAccessError()) {
+-        showMessage(tr("Access error for config file %1").arg(config()->getFileName()), MessageWidget::Error);
+-    }
+-
+ #ifdef QT_DEBUG
+     m_generalUi->singleInstanceCheckBox->setEnabled(false);
+     m_generalUi->launchAtStartup->setEnabled(false);
