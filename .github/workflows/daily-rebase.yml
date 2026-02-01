@@ -178,7 +178,6 @@ jobs:
       fail-fast: false
       matrix:
         package: ${{ fromJson(needs.identify-packages.outputs.packages_json) }}
-    max-parallel: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
