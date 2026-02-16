@@ -30,9 +30,24 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
     python3
   ];
 
-  # npm install will error when electron tries to download its binary
-  # we don't need it anyways since we wrap the program with our nixpkgs electron
-  env.ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
+  buildInputs = [
+    electron_41.electronWrapHook
+  ];
+
+  env = {
+    electronWrapperArgs = toString [
+      # Add xdg-utils to path via suffix, per PR #181171
+      "--suffix"
+      "PATH"
+      ":"
+      (lib.makeBinPath [ xdg-utils ])
+    ];
+    electronWrapPath = "${placeholder "out"}/lib/node_modules/webcord";
+
+    # npm install will error when electron tries to download its binary
+    # we don't need it anyways since we wrap the program with our nixpkgs electron
+    ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
+  };
 
   # remove husky commit hooks, errors and aren't needed for packaging
   postPatch = ''
@@ -40,29 +55,19 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
   '';
 
   # override installPhase so we can copy the only folders that matter
-  installPhase =
-    let
-      binPath = lib.makeBinPath [ xdg-utils ];
-    in
-    ''
-      runHook preInstall
+  installPhase = ''
+    runHook preInstall
 
-      # Remove dev deps that aren't necessary for running the app
-      npm prune --omit=dev
+    # Remove dev deps that aren't necessary for running the app
+    npm prune --omit=dev
 
-      mkdir -p $out/lib/node_modules/webcord
-      cp -r app node_modules sources package.json $out/lib/node_modules/webcord/
+    mkdir -p $out/lib/node_modules/webcord
+    cp -r app node_modules sources package.json $out/lib/node_modules/webcord/
 
-      install -Dm644 sources/assets/icons/app.png $out/share/icons/hicolor/256x256/apps/webcord.png
+    install -Dm644 sources/assets/icons/app.png $out/share/icons/hicolor/256x256/apps/webcord.png
 
-      # Add xdg-utils to path via suffix, per PR #181171
-      makeWrapper '${lib.getExe electron_41}' $out/bin/webcord \
-        --suffix PATH : "${binPath}" \
-        --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}" \
-        --add-flags $out/lib/node_modules/webcord/
-
-      runHook postInstall
-    '';
+    runHook postInstall
+  '';
 
   desktopItems = [
     (makeDesktopItem {
