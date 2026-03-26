@@ -10,12 +10,12 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "iamb";
-  version = "0.0.11";
+  version = "0.0.11-unstable-2026-01-20";
 
   src = fetchFromGitHub {
     owner = "ulyssa";
     repo = "iamb";
-    tag = "v${finalAttrs.version}";
+    rev = "93fc47d019cd6a9d56f163aa6ba819ef1fd309d6";
     hash = "sha256-nvEOtV1Y5K9E1Lj+bPnQ6k1AneDM9OT3RbV3Urm/1Qs=";
   };
 
@@ -39,7 +39,6 @@ rustPlatform.buildRustPackage (finalAttrs: {
   nativeInstallCheckInputs = [
     versionCheckHook
   ];
-  doInstallCheck = true;
 
   passthru.updateScript = nix-update-script { };
 
@@ -47,7 +46,6 @@ rustPlatform.buildRustPackage (finalAttrs: {
     description = "Matrix client for Vim addicts";
     mainProgram = "iamb";
     homepage = "https://github.com/ulyssa/iamb";
-    changelog = "https://github.com/ulyssa/iamb/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ meain ];
   };
