@@ -282,6 +282,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./0004-hide-settings-for-disabled-services.patch
     # Avoids error about `CGDisplayStream` initializer being unavailable on macOS when using the 26.x SDK.
     ./0005-avoid-using-obsolete-api.patch
+    ./0001-enable-pro-features.patch
   ];
 
   postPatch = ''
