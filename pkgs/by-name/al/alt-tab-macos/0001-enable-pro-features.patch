@@ -1,0 +1,38 @@
+From 76ee2499dc8b73909127580d1852bda74b9b007f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=A9clairevoyant?=
+ <848000+eclairevoyant@users.noreply.github.com>
+Date: Wed, 17 Jun 2026 14:53:46 -0400
+Subject: [PATCH] enable pro features
+
+---
+ src/pro/license/LicenseManager.swift | 14 +-------------
+ 1 file changed, 1 insertion(+), 13 deletions(-)
+
+diff --git a/src/pro/license/LicenseManager.swift b/src/pro/license/LicenseManager.swift
+index 4ecf55b1..81d28c30 100644
+--- a/src/pro/license/LicenseManager.swift
++++ b/src/pro/license/LicenseManager.swift
+@@ -174,19 +174,7 @@ class LicenseManager {
+     }
+ 
+     func computeState() -> LicenseState {
+-        if keychain.value(account: Self.keychainKeyAccount) != nil {
+-            let lastValidationResult = defaults.bool(forKey: "lastValidationResult")
+-            guard lastValidationResult else { return .trialExpired }
+-            if let variant = keychain.value(account: Self.keychainVariantAccount),
+-               let maxVersion = Self.versionLimitedVariants[variant] {
+-                let currentVersion = currentAppVersion()
+-                if currentVersion.compare(maxVersion, options: .numeric) == .orderedDescending {
+-                    return .proExpired
+-                }
+-            }
+-            return .pro
+-        }
+-        return computeTrialState()
++        return .pro
+     }
+ 
+     private func computeTrialState() -> LicenseState {
+-- 
+2.54.0
+
