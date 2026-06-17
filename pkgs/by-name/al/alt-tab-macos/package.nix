@@ -288,6 +288,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./0003-use-runtime-dispatch-for-Liquid-Glass-with-SDK-14.patch
     # Don't offer preferences for services disabled by the source-only stubs.
     ./0004-hide-settings-for-disabled-services.patch
+    ./0001-enable-pro-features.patch
   ];
 
   # Remove trailing comma incompatible with Swift 5.10
