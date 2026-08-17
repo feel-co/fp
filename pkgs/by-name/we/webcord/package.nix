@@ -95,6 +95,6 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
       huantian
       NotAShelf
     ];
-    platforms = lib.platforms.linux;
+    platforms = with lib.platforms; linux ++ darwin;
   };
 }
